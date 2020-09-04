@@ -52,7 +52,7 @@ public class ClientChat extends JFrame implements ActionListener {
 	private OutputStream os;
 	private DataInputStream dis;
 	private DataOutputStream dos;
-	
+
 	// 그 외 자원
 	Vector userList= new Vector(); // 접속자 명단
 	Vector roomList = new Vector(); // 채팅방 목록 
@@ -109,8 +109,7 @@ public class ClientChat extends JFrame implements ActionListener {
 		sendMessage(name);
 		
 		// user JList에 vector추가 
-		userList.add(name);
-		userLt.setListData(userList);
+		userList.add(name); // 유저만 추가
 		
 		
 		
@@ -147,27 +146,37 @@ public class ClientChat extends JFrame implements ActionListener {
 		st =new StringTokenizer(str,"/");
 		
 		String protocol = st.nextToken();
-		String message = st.nextToken(); 
+		String user = st.nextToken(); 
 		
 		System.out.println("프로토콜 : "+ protocol);
-		System.out.println("message : " + message);
+		System.out.println("message : " + user);
 		
 		if(protocol.equals("NewUser")) { // 새로운 접속자 
 			
-			userList.add(message);
+			userList.add(user);
+		
+			/*
 			userLt.setListData(userList);
+			userLt.updateUI(); // 빠르게 추가될경우 에러가 발생하기 때문에 변경 
+			*/
+			//업데이트가 아니라 사용자를 추가 
 			
 		}else if(protocol.equals("OldUser")) {
-			userList.add(message);
-			userLt.setListData(userList);
+			userList.add(user);
+			//userLt.setListData(userList); 사용자만 추가 시키기로 
+			
 		}else if(protocol.equals("Note")) {
-			st = new StringTokenizer(message,"@");
-			String user = st.nextToken();
+		
 			String note = st.nextToken();
 			
 			System.out.println(user + " : " + note);
 			
 			JOptionPane.showMessageDialog(null, note, user+"로부터 온 쪽지 : ",JOptionPane.CLOSED_OPTION);
+		
+		}else if(protocol.equals("UserListUpdate")) {
+			
+			userLt.setListData(userList);
+		
 		}
 		
 		
@@ -249,6 +258,7 @@ public class ClientChat extends JFrame implements ActionListener {
 
 		userLt.setBounds(17, 45, 100, 120);
 		contentPane.add(userLt);
+		userLt.setListData(userList);
 
 		JLabel lbChatRoom = new JLabel("채 팅 방");
 		lbChatRoom.setBounds(17, 205, 100, 20);
@@ -258,6 +268,7 @@ public class ClientChat extends JFrame implements ActionListener {
 
 		chatRoomLt.setBounds(17, 230, 100, 120);
 		contentPane.add(chatRoomLt);
+		chatRoomLt.setListData(roomList);
 
 		joinRoomBtn.setBounds(17, 365, 100, 30);
 		contentPane.add(joinRoomBtn);
@@ -307,8 +318,8 @@ public class ClientChat extends JFrame implements ActionListener {
 			
 			if(note != null) { // 사용자가 입력했을 때
 
-				// ex) Note/user2@안녕하세요 
-				sendMessage("Note/"+user+"@"+note);
+				// ex) Note/user2/안녕하세요 
+				sendMessage("Note/"+user+"/"+note);
 				
 			}
 			

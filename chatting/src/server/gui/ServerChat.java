@@ -200,6 +200,8 @@ public class ServerChat extends JFrame implements ActionListener {
 				
 				userVector.add(this); // 사용자들에게 알린 후에 vector에 자신을 추가 
 				
+				broadCast("UserListUpdate/ ");
+				
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -231,15 +233,14 @@ public class ServerChat extends JFrame implements ActionListener {
 			st = new StringTokenizer(str,"/");
 			
 			String protocol = st.nextToken();
-			String message = st.nextToken();
+			String user = st.nextToken();
 			
 			System.out.println("protocol : " + protocol);
-			System.out.println("메세지 : " + message);
+			System.out.println("메세지 : " + user);
 			
+			// 메세지를 받아서 protocol이 Note라면 다시 보냄 
 			if(protocol.equals("Note")) {
 				
-				st = new StringTokenizer(message,"@");
-				String user = st.nextToken();
 				String note = st.nextToken();
 				
 				System.out.println("받는 사람 : " + user);
@@ -249,12 +250,13 @@ public class ServerChat extends JFrame implements ActionListener {
 				for(int i =0 ; i < userVector.size();i++) {
 					UserInfo u = (UserInfo)userVector.elementAt(i);
 					
-					if(u.name.equals(user)) {
-						u.sendMessage("Note/"+name + "@"+note);
+					if(u.name.equals(user)) { // 받는 사람이름을 백터에서 찾아서 있다면 보냄 
+						u.sendMessage("Note/"+name + "/"+note);
 					}
 				}
 				
 			}
+				
 			
 		}
 		
@@ -263,7 +265,7 @@ public class ServerChat extends JFrame implements ActionListener {
 			for(int i = 0; i<userVector.size(); i++) {// 현재 접속된 사용자에게 새로운 알림 
 				
 				UserInfo u = (UserInfo)userVector.elementAt(i);
-			
+				System.out.println("broadCast : " +str);
 				u.sendMessage(str); // protocol은 NewUser/ 기존의 사용자에게 알림
 				
 			}
