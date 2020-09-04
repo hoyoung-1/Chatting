@@ -80,6 +80,7 @@ public class ClientChat extends JFrame implements ActionListener {
 			e.printStackTrace();
 		}
 	} // End clinetNet
+	
 
 	private void connection() { // 메소드 연결부분
 
@@ -92,6 +93,18 @@ public class ClientChat extends JFrame implements ActionListener {
 			dos = new DataOutputStream(os);
 
 		} catch (Exception e) { // 에러처리 부분
+			e.printStackTrace();
+		}
+		
+		sendMessage("클라이언트 접속합니다");
+		
+		String msg = "";
+		
+		try {
+			msg = dis.readUTF(); // 서버로부터 메세지를 수신, 그렇지 않으면 무한정 대기 
+			
+			System.out.println("서버로 부터 들어온 메시지 : "+ msg);
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
@@ -209,6 +222,8 @@ public class ClientChat extends JFrame implements ActionListener {
 		this.setVisible(true);
 	}
 
+	
+	// 이벤트 작성 부분 
 	@Override
 	public void actionPerformed(ActionEvent e) {
 

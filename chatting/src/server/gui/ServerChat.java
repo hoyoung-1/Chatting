@@ -3,7 +3,11 @@ package server.gui;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -29,10 +33,74 @@ public class ServerChat extends JFrame implements ActionListener {
 	private ServerSocket serverSocket;
 	private Socket socket;
 	private int port;
+	private InputStream is;
+	private OutputStream os;
+	private DataInputStream dis;
+	private DataOutputStream dos;
 
 	ServerChat() { // 생성자
 		serverInit();
 		actionBtn();
+	}
+
+	private void serverNet() {
+		try {
+			port = Integer.parseInt(portTf.getText().trim());
+			serverSocket = new ServerSocket(port); // 포트번호 부여
+
+			if (serverSocket != null) {
+				connection();
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	} // End serverNet();
+
+	private void connection() {
+
+		// thread를 처리하기 전에 먼저 IOStream을 설정
+
+		Thread th = new Thread(new Runnable() {
+			// 1개의 스레드에서 1가지의 기능만
+			@Override
+			public void run() {
+				try {
+					textArea.append("접속 대기중.....\n");
+					socket = serverSocket.accept();
+					textArea.append("사용자 접속\n");
+
+					//소켓에 연결된 후에 
+					try {
+
+						is = socket.getInputStream();
+						dis = new DataInputStream(is);
+
+						os = socket.getOutputStream();
+						dos = new DataOutputStream(os);
+
+					} catch (Exception e) { // 에러처리
+
+					}
+
+					
+					String msg = "";
+					msg = dis.readUTF(); // 사용자로부터 들어오는 메세지
+
+					textArea.append(msg);
+					
+					dos.writeUTF("접속 확인");
+					
+					
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
+
+		th.start(); // 이 부분을 넣어야함
 	}
 
 	private void actionBtn() { // 이벤트 등록 메소드
@@ -75,41 +143,6 @@ public class ServerChat extends JFrame implements ActionListener {
 	} // End serverInit();
 
 	// Socket 설정
-
-	private void serverNet() {
-		try {
-			port = Integer.parseInt(portTf.getText().trim());
-			serverSocket = new ServerSocket(port); // 포트번호 부여
-
-			if (serverSocket != null) {
-				connection();
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-	} // End serverNet();
-
-	private void connection() {
-		
-		Thread th = new Thread(new Runnable() {
-			// 1개의 스레드에서 1가지의 기능만 
-			@Override
-			public void run() {
-				try {
-					textArea.append("접속 대기중.....\n");
-					socket = serverSocket.accept();
-					textArea.append("사용자 접속\n");
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		});
-		
-		th.start(); // 이 부분을 넣어야함
-	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
