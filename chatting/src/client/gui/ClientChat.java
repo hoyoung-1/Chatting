@@ -16,6 +16,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -159,6 +160,14 @@ public class ClientChat extends JFrame implements ActionListener {
 		}else if(protocol.equals("OldUser")) {
 			userList.add(message);
 			userLt.setListData(userList);
+		}else if(protocol.equals("Note")) {
+			st = new StringTokenizer(message,"@");
+			String user = st.nextToken();
+			String note = st.nextToken();
+			
+			System.out.println(user + " : " + note);
+			
+			JOptionPane.showMessageDialog(null, note, user+"로부터 온 쪽지 : ",JOptionPane.CLOSED_OPTION);
 		}
 		
 		
@@ -292,6 +301,20 @@ public class ClientChat extends JFrame implements ActionListener {
 		} else if (e.getSource() == noteSendBtn) {
 
 			System.out.println("쪽지보내기 버튼");
+			String user = (String)userLt.getSelectedValue();
+			
+			String note = JOptionPane.showInputDialog("보낼메세지");
+			
+			if(note != null) { // 사용자가 입력했을 때
+
+				// ex) Note/user2@안녕하세요 
+				sendMessage("Note/"+user+"@"+note);
+				
+			}
+			
+			System.out.println("받는사람 : " + user);
+			System.out.println("쪽지 내용 : " + note);
+			
 
 		} else if (e.getSource() == joinRoomBtn) {
 
@@ -306,7 +329,7 @@ public class ClientChat extends JFrame implements ActionListener {
 			System.out.println("전송버튼");
 			sendMessage("임시테스트 입니다.");
 
-		}
+		} 
 	}
 
 	public static void main(String[] args) {

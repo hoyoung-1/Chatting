@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.StringTokenizer;
 import java.util.Vector;
 
 import javax.swing.JButton;
@@ -35,6 +36,8 @@ public class ServerChat extends JFrame implements ActionListener {
 	private Socket socket;
 	private int port;
 	private Vector userVector = new Vector();
+	
+	private StringTokenizer st;
 
 	ServerChat() { // 생성자
 		serverInit();
@@ -196,7 +199,7 @@ public class ServerChat extends JFrame implements ActionListener {
 				
 				
 				userVector.add(this); // 사용자들에게 알린 후에 vector에 자신을 추가 
-
+				
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -212,7 +215,7 @@ public class ServerChat extends JFrame implements ActionListener {
 
 					String msg = dis.readUTF();
 					textArea.append(name + ": 사용자로부터 들어온 메세지 : " + msg + "\n");
-
+					inMessage(msg);
 				} catch (IOException e) {
 
 					e.printStackTrace();
@@ -222,6 +225,38 @@ public class ServerChat extends JFrame implements ActionListener {
 			}
 
 		}// End run();
+		
+		private void inMessage(String str) {
+			
+			st = new StringTokenizer(str,"/");
+			
+			String protocol = st.nextToken();
+			String message = st.nextToken();
+			
+			System.out.println("protocol : " + protocol);
+			System.out.println("메세지 : " + message);
+			
+			if(protocol.equals("Note")) {
+				
+				st = new StringTokenizer(message,"@");
+				String user = st.nextToken();
+				String note = st.nextToken();
+				
+				System.out.println("받는 사람 : " + user);
+				System.out.println("쪽지 : " + note);
+				
+				// 백터에서 해당 사용자를 찾아서 메세지 전송
+				for(int i =0 ; i < userVector.size();i++) {
+					UserInfo u = (UserInfo)userVector.elementAt(i);
+					
+					if(u.name.equals(user)) {
+						u.sendMessage("Note/"+name + "@"+note);
+					}
+				}
+				
+			}
+			
+		}
 		
 		private void broadCast(String str) { // 전체 사용자에게 메세지를 보내는 부분 
 			
