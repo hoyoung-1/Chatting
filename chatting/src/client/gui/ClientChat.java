@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.StringTokenizer;
+import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -37,15 +39,24 @@ public class ClientChat extends JFrame implements ActionListener {
 	private JButton joinRoomBtn = new JButton("참여하기");
 	private JButton makeRoomBtn = new JButton("방만들기");
 	private JButton sendBtn = new JButton("전송");
+	private JList userLt = new JList();
+	private JList chatRoomLt = new JList();
 
 	// clientNet 자원
 	private Socket socket;
 	private String ip;
 	private int port;
+	private String name;
 	private InputStream is;
 	private OutputStream os;
 	private DataInputStream dis;
 	private DataOutputStream dos;
+	
+	// 그 외 자원
+	Vector userList= new Vector(); // 접속자 명단
+	Vector roomList = new Vector(); // 채팅방 목록 
+	StringTokenizer st; // StringTokenizer는 문자열을 어떤 기준으로 나누는데 사용할 수 있는 클래스이다. 
+						// 예 ) NewUser/name = StringTokenizer를 사용하면 '/'를 기준으로 NewUser와 name으로 나눌 수 있음
 
 	ClientChat() { // 생성자
 		loginFrameInit(); // loginFrame을 가져옴
@@ -63,9 +74,6 @@ public class ClientChat extends JFrame implements ActionListener {
 
 	private void clientNet() {
 		try {
-
-			ip = ipTf.getText().trim();
-			port = Integer.parseInt(portTf.getText().trim());
 
 			socket = new Socket(ip, port);
 			System.out.println("채팅에 접속됨");
@@ -94,21 +102,67 @@ public class ClientChat extends JFrame implements ActionListener {
 
 		} catch (Exception e) { // 에러처리 부분
 			e.printStackTrace();
-		}
+		}// Stream 설정 끝
 		
-		sendMessage("클라이언트 접속합니다");
+		//처음 접속시 name전송
+		sendMessage(name);
 		
-		String msg = "";
+		// user JList에 vector추가 
+		userList.add(name);
+		userLt.setListData(userList);
 		
-		try {
-			msg = dis.readUTF(); // 서버로부터 메세지를 수신, 그렇지 않으면 무한정 대기 
+		
+		
+		// Thread로 멈추지 않게 설정 
+		Thread th = new Thread(new Runnable() {
 			
-			System.out.println("서버로 부터 들어온 메시지 : "+ msg);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+			@Override
+			public void run() {
+
+				while(true) { // 무한 대기 
+					try {
+						
+						String msg = dis.readUTF();// 메세지 수신
+						
+						System.out.println("서버로 수신된 메세지 : " + msg);
+						
+						inMessage(msg);
+						
+					} catch (IOException e) {
+
+						e.printStackTrace();
+					
+					} 
+				}// End While
+			}
+		});
+		
+		th.start();
 
 	} // End connection
+	
+	private void inMessage(String str) { // 서버로부터 받는 모든 메세지가 여기로 들어옴 
+		
+		st =new StringTokenizer(str,"/");
+		
+		String protocol = st.nextToken();
+		String message = st.nextToken(); 
+		
+		System.out.println("프로토콜 : "+ protocol);
+		System.out.println("message : " + message);
+		
+		if(protocol.equals("NewUser")) { // 새로운 접속자 
+			
+			userList.add(message);
+			userLt.setListData(userList);
+			
+		}else if(protocol.equals("OldUser")) {
+			userList.add(message);
+			userLt.setListData(userList);
+		}
+		
+		
+	}
 
 	private void sendMessage(String str) { // 서버에게 메세지를 보내는 메소드, 서버에게 메시지를 보낼 때는 OUT으로 보냄
 
@@ -184,7 +238,6 @@ public class ClientChat extends JFrame implements ActionListener {
 		noteSendBtn.setBounds(17, 169, 100, 30);
 		contentPane.add(noteSendBtn);
 
-		JList userLt = new JList();
 		userLt.setBounds(17, 45, 100, 120);
 		contentPane.add(userLt);
 
@@ -194,7 +247,6 @@ public class ClientChat extends JFrame implements ActionListener {
 		lbChatRoom.setHorizontalAlignment(JLabel.CENTER);
 		contentPane.add(lbChatRoom);
 
-		JList chatRoomLt = new JList();
 		chatRoomLt.setBounds(17, 230, 100, 120);
 		contentPane.add(chatRoomLt);
 
@@ -230,6 +282,11 @@ public class ClientChat extends JFrame implements ActionListener {
 		if (e.getSource() == connectBtn) {
 
 			System.out.println("loginFrame 접속이 눌림");
+			
+			ip = ipTf.getText().trim();
+			port = Integer.parseInt(portTf.getText().trim());
+			name = nameTf.getText().trim(); // name을 받아오는 부분 
+			
 			clientNet();
 
 		} else if (e.getSource() == noteSendBtn) {
@@ -247,6 +304,7 @@ public class ClientChat extends JFrame implements ActionListener {
 		} else if (e.getSource() == sendBtn) {
 
 			System.out.println("전송버튼");
+			sendMessage("임시테스트 입니다.");
 
 		}
 	}

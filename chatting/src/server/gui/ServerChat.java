@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -33,10 +34,7 @@ public class ServerChat extends JFrame implements ActionListener {
 	private ServerSocket serverSocket;
 	private Socket socket;
 	private int port;
-	private InputStream is;
-	private OutputStream os;
-	private DataInputStream dis;
-	private DataOutputStream dos;
+	private Vector userVector = new Vector();
 
 	ServerChat() { // 생성자
 		serverInit();
@@ -66,36 +64,24 @@ public class ServerChat extends JFrame implements ActionListener {
 			// 1개의 스레드에서 1가지의 기능만
 			@Override
 			public void run() {
-				try {
-					textArea.append("접속 대기중.....\n");
-					socket = serverSocket.accept();
-					textArea.append("사용자 접속\n");
 
-					//소켓에 연결된 후에 
+				while (true) { // 사용자를 계속해서 받아줌
+
 					try {
 
-						is = socket.getInputStream();
-						dis = new DataInputStream(is);
+						textArea.append("접속 대기중.....\n");
+						socket = serverSocket.accept();
+						textArea.append("사용자 접속\n");
 
-						os = socket.getOutputStream();
-						dos = new DataOutputStream(os);
+						UserInfo user = new UserInfo(socket); // 소켓을 객체로 만듬
 
-					} catch (Exception e) { // 에러처리
+						user.start(); // thread를 상속받았기 때문에 가능
+
+					} catch (IOException e) {
+
+						e.printStackTrace();
 
 					}
-
-					
-					String msg = "";
-					msg = dis.readUTF(); // 사용자로부터 들어오는 메세지
-
-					textArea.append(msg);
-					
-					dos.writeUTF("접속 확인");
-					
-					
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
 				}
 			}
 		});
@@ -162,5 +148,109 @@ public class ServerChat extends JFrame implements ActionListener {
 	public static void main(String[] args) {
 		new ServerChat();
 	} // End main
+
+	
+	
+	class UserInfo extends Thread {
+
+		private OutputStream os;
+		private InputStream is;
+		private DataOutputStream dos;
+		private DataInputStream dis;
+
+		private Socket userSocket;
+		private String name;
+
+		UserInfo(Socket socket) {
+			this.userSocket = socket; // 연결된 소켓을 객체로 만듬 .
+			userNet();
+		}
+
+		// IOStream
+		private void userNet() {
+
+			try {
+
+				is = userSocket.getInputStream(); // 그냥 소켓으로하면 전역변수의 소켓을 사용하기 때문에 userScoket을 켜야함
+				dis = new DataInputStream(is);
+
+				os = userSocket.getOutputStream();
+				dos = new DataOutputStream(os);
+
+				name = dis.readUTF();
+				textArea.append(name + "님이 접속하였습니다.\n");
+				
+				// 기존 사용자들에게 새로운 사용자 알림 
+				
+				System.out.println("현재 접속된 사용자 수 : " + userVector.size());
+				
+				broadCast("NewUser/" + name);
+				
+				// 자신에게 기존 사용자를 알림 
+				
+				for(int i = 0; i < userVector.size(); i++) {
+					UserInfo u = (UserInfo)userVector.elementAt(i);
+					
+					sendMessage("OldUser/"+u.name);
+				}
+				
+				
+				userVector.add(this); // 사용자들에게 알린 후에 vector에 자신을 추가 
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+		}//End userNet();
+
+		public void run() { // thread로 처리할 내용
+			// 클라이언트와 연결된 메세지가 들어오는 곳을 개별 스레드를 돌려서 계속 메세지를 받음
+
+			while (true) {
+
+				try {
+
+					String msg = dis.readUTF();
+					textArea.append(name + ": 사용자로부터 들어온 메세지 : " + msg + "\n");
+
+				} catch (IOException e) {
+
+					e.printStackTrace();
+
+				}
+
+			}
+
+		}// End run();
+		
+		private void broadCast(String str) { // 전체 사용자에게 메세지를 보내는 부분 
+			
+			for(int i = 0; i<userVector.size(); i++) {// 현재 접속된 사용자에게 새로운 알림 
+				
+				UserInfo u = (UserInfo)userVector.elementAt(i);
+			
+				u.sendMessage(str); // protocol은 NewUser/ 기존의 사용자에게 알림
+				
+			}
+		}
+		
+		private void sendMessage(String str) {
+		
+			try {
+				
+				dos.writeUTF(str); // 서버에서 나가는 OutputStrame
+				
+			} catch (IOException e) {
+
+				e.printStackTrace();
+				
+			}
+		}
+		
+		
+		
+		
+
+	} // End UserInfo class
 
 } // End ServerCaht
