@@ -191,7 +191,7 @@ public class ClientChat extends JFrame implements ActionListener {
 		}else if(protocol.equals("Chatting")) {
 		
 			String msg = st.nextToken();
-			
+			System.out.println("client Chatting : "+msg);
 			textArea.append(user+" : "+msg+"\n");
 			
 		}else if (protocol.equals("OldRoom")) {

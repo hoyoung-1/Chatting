@@ -311,6 +311,10 @@ public class ServerChat extends JFrame implements ActionListener {
 					RoomInfo r = (RoomInfo)roomVector.elementAt(i);
 					
 					if(r.roomName.equals(user)){
+						
+						// 새로운 사용자를 알린다.
+						r.boradCastRoom("Chatting/알림/**********"+name+"님이 입장하셨습니다**********");
+						
 						// 사용자 추가
 						r.addUser(this);
 						sendMessage("JoinRoom/"+user);
