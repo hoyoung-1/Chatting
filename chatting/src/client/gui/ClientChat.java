@@ -3,6 +3,8 @@ package client.gui;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -23,7 +25,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
-public class ClientChat extends JFrame implements ActionListener {
+public class ClientChat extends JFrame implements ActionListener,KeyListener {
 
 	// loginFrame 자원
 	private JFrame loginFrame = new JFrame(); // sub Frame
@@ -55,11 +57,11 @@ public class ClientChat extends JFrame implements ActionListener {
 	private DataOutputStream dos;
 
 	// 그 외 자원
-	Vector userList= new Vector(); // 접속자 명단
-	Vector roomList = new Vector(); // 채팅방 목록 
-	StringTokenizer st; // StringTokenizer는 문자열을 어떤 기준으로 나누는데 사용할 수 있는 클래스이다. 
+	Vector userList = new Vector(); // 접속자 명단
+	Vector roomList = new Vector(); // 채팅방 목록
+	StringTokenizer st; // StringTokenizer는 문자열을 어떤 기준으로 나누는데 사용할 수 있는 클래스이다.
 						// 예 ) NewUser/name = StringTokenizer를 사용하면 '/'를 기준으로 NewUser와 name으로 나눌 수 있음
-	
+
 	private String myRoom; // 내가 접속한 방 이름
 
 	ClientChat() { // 생성자
@@ -74,6 +76,7 @@ public class ClientChat extends JFrame implements ActionListener {
 		joinRoomBtn.addActionListener(this);
 		makeRoomBtn.addActionListener(this);
 		sendBtn.addActionListener(this);
+		textField.addKeyListener(this);
 	}
 
 	private void clientNet() {
@@ -85,14 +88,11 @@ public class ClientChat extends JFrame implements ActionListener {
 			if (socket != null) {// 정상적으로 소켓이 연결이 되었을 때
 
 				connection();
-
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			JOptionPane.showMessageDialog(null, "연결이 실패하였습니다.", "알림", JOptionPane.ERROR_MESSAGE, null);
 		}
 	} // End clinetNet
-	
 
 	private void connection() { // 메소드 연결부분
 
@@ -105,110 +105,136 @@ public class ClientChat extends JFrame implements ActionListener {
 			dos = new DataOutputStream(os);
 
 		} catch (Exception e) { // 에러처리 부분
-			e.printStackTrace();
-		}// Stream 설정 끝
+			JOptionPane.showMessageDialog(null, "연결이 실패하였습니다.", "알림", JOptionPane.ERROR_MESSAGE, null);
+		} // Stream 설정 끝
+
 		
-		//처음 접속시 name전송
+		this.setVisible(true);
+		loginFrame.setVisible(false);
+		// 처음 접속시 name전송
 		sendMessage(name);
-		
-		// user JList에 vector추가 
+
+		// user JList에 vector추가
 		userList.add(name); // 유저만 추가
-		
-		
-		
-		// Thread로 멈추지 않게 설정 
+
+		// Thread로 멈추지 않게 설정
 		Thread th = new Thread(new Runnable() {
-			
+
 			@Override
 			public void run() {
 
-				while(true) { // 무한 대기 
-					try {
-						
-						String msg = dis.readUTF();// 메세지 수신
-						
-						System.out.println("서버로 수신된 메세지 : " + msg);
-						
-						inMessage(msg);
-						
-					} catch (IOException e) {
+				try {
+					while (true) { // 무한 대기
 
-						e.printStackTrace();
-					
-					} 
-				}// End While
-			}
+						String msg = dis.readUTF();// 메세지 수신
+
+						System.out.println("서버로 수신된 메세지 : " + msg);
+
+						inMessage(msg);
+					}
+
+				} catch (IOException e) {
+
+					try {
+						os.close();
+						is.close();
+						dos.close();
+						dis.close();
+						socket.close();
+						JOptionPane.showMessageDialog(null, "서버와의 접속이 끊였습니다", "알림", JOptionPane.ERROR_MESSAGE);
+
+					} catch (Exception e1) {
+
+					}
+
+				}
+			}// End While
+
 		});
-		
+
 		th.start();
 
 	} // End connection
-	
-	private void inMessage(String str) { // 서버로부터 받는 모든 메세지가 여기로 들어옴 
-		
-		st =new StringTokenizer(str,"/");
-		
+
+	private void inMessage(String str) { // 서버로부터 받는 모든 메세지가 여기로 들어옴
+
+		st = new StringTokenizer(str, "/");
+
 		String protocol = st.nextToken();
-		String user = st.nextToken(); 
-		
-		System.out.println("프로토콜 : "+ protocol);
+		String user = st.nextToken();
+
+		System.out.println("프로토콜 : " + protocol);
 		System.out.println("message : " + user);
-		
-		if(protocol.equals("NewUser")) { // 새로운 접속자 
-			
+
+		if (protocol.equals("NewUser")) { // 새로운 접속자
+
 			userList.add(user);
-		
-			
-		}else if(protocol.equals("OldUser")) {
+
+		} else if (protocol.equals("OldUser")) {
 			userList.add(user);
-			
-		}else if(protocol.equals("Note")) {
-		
+
+		} else if (protocol.equals("Note")) {
+
 			String note = st.nextToken();
-			
+
 			System.out.println(user + " : " + note);
-			
-			JOptionPane.showMessageDialog(null, note, user+"로부터 온 쪽지 : ",JOptionPane.CLOSED_OPTION);
-		
-		}else if(protocol.equals("UserListUpdate")) {
-			
+
+			JOptionPane.showMessageDialog(null, note, user + "로부터 온 쪽지 : ", JOptionPane.CLOSED_OPTION);
+
+		} else if (protocol.equals("UserListUpdate")) {
+
 			userLt.setListData(userList);
-		
-		}else if(protocol.equals("CreateRoom")) { // 방만들기 성공
-			 
+
+		} else if (protocol.equals("CreateRoom")) { // 방만들기 성공
+
 			myRoom = user;
-			
-			
-		}else if(protocol.equals("CreateRoomFail")) { // 방 만들기 성공 
-			
+			sendBtn.setEnabled(true);
+			textField.setEnabled(true);
+			makeRoomBtn.setEnabled(false);
+			joinRoomBtn.setEnabled(false);
+
+
+		} else if (protocol.equals("CreateRoomFail")) { 
+
 			JOptionPane.showMessageDialog(null, "방 만들기 실패", "알림", JOptionPane.ERROR_MESSAGE, null);
-			
-		}else if(protocol.equals("NewRoom")) {
-		
+
+		} else if (protocol.equals("NewRoom")) {
+
 			roomList.add(user);
 			chatRoomLt.setListData(roomList);
-		
-		}else if(protocol.equals("Chatting")) {
-		
+
+		} else if (protocol.equals("Chatting")) {
+
 			String msg = st.nextToken();
-			System.out.println("client Chatting : "+msg);
-			textArea.append(user+" : "+msg+"\n");
-			
-		}else if (protocol.equals("OldRoom")) {
-			
+			System.out.println("client Chatting : " + msg);
+			textArea.append(user + " : " + msg + "\n");
+
+		} else if (protocol.equals("OldRoom")) {
+
 			roomList.add(user);
-			
-		}else if (protocol.equals("RoomListUpdate")) {
-		
+
+		} else if (protocol.equals("RoomListUpdate")) {
+
 			chatRoomLt.setListData(roomList);
-		
-		}else if (protocol.equals("JoinRoom")) {
-			
+
+		} else if (protocol.equals("JoinRoom")) {
+
 			myRoom = user;
 			JOptionPane.showMessageDialog(null, "채팅방에 입장했습니다.", "알림", JOptionPane.INFORMATION_MESSAGE, null);
+			sendBtn.setEnabled(true);
+			textField.setEnabled(true);
+			makeRoomBtn.setEnabled(false);
+			joinRoomBtn.setEnabled(false);
+
+		} else if (protocol.equals("UserOut")) {
+
+			userList.remove(user);
+
+		} else if (protocol.equals("RoomOut")) { // 채팅방에 아무도 없을 때
+
+			roomList.remove(user);
 		}
-		
-	
+
 	}
 
 	private void sendMessage(String str) { // 서버에게 메세지를 보내는 메소드, 서버에게 메시지를 보낼 때는 OUT으로 보냄
@@ -301,7 +327,7 @@ public class ClientChat extends JFrame implements ActionListener {
 
 		joinRoomBtn.setBounds(17, 365, 100, 30);
 		contentPane.add(joinRoomBtn);
-
+		
 		makeRoomBtn.setBounds(17, 399, 100, 30);
 		contentPane.add(makeRoomBtn);
 
@@ -310,20 +336,22 @@ public class ClientChat extends JFrame implements ActionListener {
 		contentPane.add(scrollPane);
 
 		scrollPane.setViewportView(textArea);
-
+		textArea.setEditable(false);
+		
 		textField = new JTextField();
 		textField.setBounds(134, 401, 330, 27);
 		contentPane.add(textField);
 		textField.setColumns(10);
-
+		textField.setEnabled(false);
+		
 		sendBtn.setBounds(473, 400, 88, 29);
 		contentPane.add(sendBtn);
+		sendBtn.setEnabled(false);
 
-		this.setVisible(true);
+		this.setVisible(false);
 	}
 
-	
-	// 이벤트 작성 부분 
+	// 이벤트 작성 부분
 	@Override
 	public void actionPerformed(ActionEvent e) {
 
@@ -331,59 +359,101 @@ public class ClientChat extends JFrame implements ActionListener {
 
 			System.out.println("loginFrame 접속이 눌림");
 			
-			ip = "127.0.0.1";//ipTf.getText().trim();
-			port = Integer.parseInt(portTf.getText().trim());
-			name = nameTf.getText().trim(); // name을 받아오는 부분 
+			if(ipTf.getText().length()==0) {
+				ipTf.setText("IP를 다시 입력해주세요 ");
+				ipTf.requestFocus();
+			} else if(portTf.getText().length()==0) {
+				portTf.setText("Port를 다시 입력해주세요");
+				portTf.requestFocus();
+			} else if (nameTf.getText().length()==0) {
+				nameTf.setText("Name을 다시 입력해주세요 ");
+				nameTf.requestFocus();
+			}else {
+				
+				ip =  ipTf.getText().trim();
+				port = Integer.parseInt(portTf.getText().trim());
+				name = nameTf.getText().trim(); // name을 받아오는 부분
+				
+				clientNet();
+				//this.setVisible(true);
+			}
 			
-			clientNet();
+			
 
 		} else if (e.getSource() == noteSendBtn) {
 
 			System.out.println("쪽지보내기 버튼");
-			String user =(String)userLt.getSelectedValue();
-			
-			String note = JOptionPane.showInputDialog("보낼메세지");
-			
-			if(note != null) { // 사용자가 입력했을 때
+			String user = (String) userLt.getSelectedValue();
 
-				// ex) Note/user2/안녕하세요 
-				sendMessage("Note/"+user+"/"+note);
-				
+			String note = JOptionPane.showInputDialog("보낼메세지");
+
+			if (note != null) { // 사용자가 입력했을 때
+
+				// ex) Note/user2/안녕하세요
+				sendMessage("Note/" + user + "/" + note);
+
 			}
-			
+
 			System.out.println("받는사람 : " + user);
 			System.out.println("쪽지 내용 : " + note);
-			
 
 		} else if (e.getSource() == joinRoomBtn) {
 
 			System.out.println("참여 버튼 ");
-			
-			String joinRoom = (String)chatRoomLt.getSelectedValue();
-			sendMessage("JoinRoom/"+joinRoom);
+
+			String joinRoom = (String) chatRoomLt.getSelectedValue();
+			sendMessage("JoinRoom/" + joinRoom);
 
 		} else if (e.getSource() == makeRoomBtn) {
 
 			System.out.println("방만들기 버튼");
-			
+
 			String roomName = JOptionPane.showInputDialog("방 이름 ");
-			if(roomName != null) {
+			if (roomName != null) {
+
+				sendMessage("CreateRoom/" + roomName);
 				
-				sendMessage("CreateRoom/"+roomName);
-			
+				joinRoomBtn.setEnabled(true);
+
 			}
 
 		} else if (e.getSource() == sendBtn) {
 			System.out.println("전송버튼");
-			
-			sendMessage("Chatting/"+myRoom +"/"+textField.getText().trim());
+
+			sendMessage("Chatting/" + myRoom + "/" + textField.getText().trim());
 			// chattion + 방이름 + 내용
-			
-			System.out.println("전송버튼 눌렀을 때 내용 : "+textField.getText().trim()+"myroom 정보 : "+myRoom);
-		} 
+			textField.setText("");
+			textField.requestFocus();
+
+			System.out.println("전송버튼 눌렀을 때 내용 : " + textField.getText().trim() + "myroom 정보 : " + myRoom);
+		}
 	}
 
 	public static void main(String[] args) {
 		new ClientChat(); // 시작될 때 생성자를 호출
+	}
+
+
+	@Override
+	public void keyReleased(KeyEvent e) { // 눌렀다 때면
+		if(e.getKeyCode()==10) {
+			sendMessage("Chatting/" + myRoom + "/" + textField.getText().trim());
+			textField.setText("");
+			textField.requestFocus();
+		}
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
 	}
 }
