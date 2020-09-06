@@ -79,11 +79,10 @@ public class ClientChat extends JFrame implements ActionListener,KeyListener {
 		textField.addKeyListener(this);
 	}
 
-	private void clientNet() {
+	private void clientNet() { // 클라이언트 socket
 		try {
 
 			socket = new Socket(ip, port);
-			System.out.println("채팅에 접속됨");
 
 			if (socket != null) {// 정상적으로 소켓이 연결이 되었을 때
 
@@ -94,7 +93,7 @@ public class ClientChat extends JFrame implements ActionListener,KeyListener {
 		}
 	} // End clinetNet
 
-	private void connection() { // 메소드 연결부분
+	private void connection() { // IOStrame 연결
 
 		try {
 
@@ -108,9 +107,10 @@ public class ClientChat extends JFrame implements ActionListener,KeyListener {
 			JOptionPane.showMessageDialog(null, "연결이 실패하였습니다.", "알림", JOptionPane.ERROR_MESSAGE, null);
 		} // Stream 설정 끝
 
-		
+		// 접속이 되었다면 
 		this.setVisible(true);
 		loginFrame.setVisible(false);
+		
 		// 처음 접속시 name전송
 		sendMessage(name);
 
@@ -131,10 +131,10 @@ public class ClientChat extends JFrame implements ActionListener,KeyListener {
 						System.out.println("서버로 수신된 메세지 : " + msg);
 
 						inMessage(msg);
-					}
+					}// End While
 
 				} catch (IOException e) {
-
+					// 서버와 접속이 끊어졌을 때.
 					try {
 						os.close();
 						is.close();
@@ -142,13 +142,14 @@ public class ClientChat extends JFrame implements ActionListener,KeyListener {
 						dis.close();
 						socket.close();
 						JOptionPane.showMessageDialog(null, "서버와의 접속이 끊였습니다", "알림", JOptionPane.ERROR_MESSAGE);
+						
 
 					} catch (Exception e1) {
 
 					}
 
 				}
-			}// End While
+			}
 
 		});
 
@@ -170,10 +171,10 @@ public class ClientChat extends JFrame implements ActionListener,KeyListener {
 
 			userList.add(user);
 
-		} else if (protocol.equals("OldUser")) {
+		} else if (protocol.equals("OldUser")) { // 기존 접속자
 			userList.add(user);
 
-		} else if (protocol.equals("Note")) {
+		} else if (protocol.equals("Note")) { // 쪽지 보내기 
 
 			String note = st.nextToken();
 
@@ -181,7 +182,7 @@ public class ClientChat extends JFrame implements ActionListener,KeyListener {
 
 			JOptionPane.showMessageDialog(null, note, user + "로부터 온 쪽지 : ", JOptionPane.CLOSED_OPTION);
 
-		} else if (protocol.equals("UserListUpdate")) {
+		} else if (protocol.equals("UserListUpdate")) { // 사용자 목록을 출력
 
 			userLt.setListData(userList);
 
@@ -194,30 +195,30 @@ public class ClientChat extends JFrame implements ActionListener,KeyListener {
 			joinRoomBtn.setEnabled(false);
 
 
-		} else if (protocol.equals("CreateRoomFail")) { 
+		} else if (protocol.equals("CreateRoomFail")) {  // 방 만들기 실패 
 
 			JOptionPane.showMessageDialog(null, "방 만들기 실패", "알림", JOptionPane.ERROR_MESSAGE, null);
 
-		} else if (protocol.equals("NewRoom")) {
+		} else if (protocol.equals("NewRoom")) { // 새로운 방을 채팅방 목록에 출력함
 
 			roomList.add(user);
 			chatRoomLt.setListData(roomList);
 
-		} else if (protocol.equals("Chatting")) {
+		} else if (protocol.equals("Chatting")) { // 채팅기능 
 
 			String msg = st.nextToken();
 			System.out.println("client Chatting : " + msg);
 			textArea.append(user + " : " + msg + "\n");
 
-		} else if (protocol.equals("OldRoom")) {
+		} else if (protocol.equals("OldRoom")) { // 기존의 방을 백터에 추가 
 
 			roomList.add(user);
 
-		} else if (protocol.equals("RoomListUpdate")) {
+		} else if (protocol.equals("RoomListUpdate")) { // JList에 출력
 
 			chatRoomLt.setListData(roomList);
 
-		} else if (protocol.equals("JoinRoom")) {
+		} else if (protocol.equals("JoinRoom")) { // 채팅방에 입장
 
 			myRoom = user;
 			JOptionPane.showMessageDialog(null, "채팅방에 입장했습니다.", "알림", JOptionPane.INFORMATION_MESSAGE, null);
@@ -226,14 +227,11 @@ public class ClientChat extends JFrame implements ActionListener,KeyListener {
 			makeRoomBtn.setEnabled(false);
 			joinRoomBtn.setEnabled(false);
 
-		} else if (protocol.equals("UserOut")) {
+		} else if (protocol.equals("UserOut")) { // 유저가 나갔을 때
 
 			userList.remove(user);
 
-		} else if (protocol.equals("RoomOut")) { // 채팅방에 아무도 없을 때
-
-			roomList.remove(user);
-		}
+		} 
 
 	}
 
@@ -358,7 +356,7 @@ public class ClientChat extends JFrame implements ActionListener,KeyListener {
 		if (e.getSource() == connectBtn) {
 
 			System.out.println("loginFrame 접속이 눌림");
-			
+			/*
 			if(ipTf.getText().length()==0) {
 				ipTf.setText("IP를 다시 입력해주세요 ");
 				ipTf.requestFocus();
@@ -369,14 +367,14 @@ public class ClientChat extends JFrame implements ActionListener,KeyListener {
 				nameTf.setText("Name을 다시 입력해주세요 ");
 				nameTf.requestFocus();
 			}else {
-				
-				ip =  ipTf.getText().trim();
-				port = Integer.parseInt(portTf.getText().trim());
+			*/
+				ip =  "127.0.0.1";//ipTf.getText().trim();
+				port = Integer.parseInt("11111");//portTf.getText().trim());
 				name = nameTf.getText().trim(); // name을 받아오는 부분
 				
 				clientNet();
 				//this.setVisible(true);
-			}
+			//}
 			
 			
 

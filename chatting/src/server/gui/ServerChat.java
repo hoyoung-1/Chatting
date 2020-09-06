@@ -144,9 +144,8 @@ public class ServerChat extends JFrame implements ActionListener {
 			serverNet();
 			startBtn.setEnabled(false);
 			portTf.setEditable(false);
-			
+
 			stopBtn.setEnabled(true);
-			
 
 		} else if (e.getSource() == stopBtn) {
 			startBtn.setEnabled(true);
@@ -154,7 +153,7 @@ public class ServerChat extends JFrame implements ActionListener {
 			portTf.setText("");
 			System.out.println("서버 중단이 눌림");
 			try {
-				// 서버에 대한 모든 자원을 초기화 시킴 
+				// 서버에 대한 모든 자원을 초기화 시킴
 				serverSocket.close();
 				userVector.removeAllElements();
 				roomVector.removeAllElements();
@@ -229,8 +228,7 @@ public class ServerChat extends JFrame implements ActionListener {
 				userVector.add(this); // 사용자들에게 알린 후에 vector에 자신을 추가
 
 				broadCast("UserListUpdate/ ");
-				
-			
+				broadCast("RoomListUpdate/ ");
 
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(null, "Strame 설정 오류", "알림", JOptionPane.ERROR_MESSAGE, null);
@@ -256,15 +254,14 @@ public class ServerChat extends JFrame implements ActionListener {
 					dos.close();
 					dis.close();
 					userSocket.close();
-					
+
 					userVector.remove(this);
 					broadCast("UserOut/" + name);
 					broadCast("UserListUpdate/ ");
-					
-			
-			
+
+
 				} catch (IOException e1) {
-					System.out.println("채팅방 뭐야");
+
 				}
 			}
 
@@ -399,5 +396,6 @@ public class ServerChat extends JFrame implements ActionListener {
 		public void addUser(UserInfo u) {
 			this.roomUserVector.add(u);
 		}
+		
 	}
 } // End ServerCaht
