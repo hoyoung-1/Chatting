@@ -161,7 +161,6 @@ public class ClientChat extends JFrame implements ActionListener {
 			
 		}else if(protocol.equals("OldUser")) {
 			userList.add(user);
-			//userLt.setListData(userList); 사용자만 추가 시키기로 
 			
 		}else if(protocol.equals("Note")) {
 		
@@ -190,11 +189,26 @@ public class ClientChat extends JFrame implements ActionListener {
 			chatRoomLt.setListData(roomList);
 		
 		}else if(protocol.equals("Chatting")) {
+		
 			String msg = st.nextToken();
+			
 			textArea.append(user+" : "+msg+"\n");
+			
+		}else if (protocol.equals("OldRoom")) {
+			
+			roomList.add(user);
+			
+		}else if (protocol.equals("RoomListUpdate")) {
+		
+			chatRoomLt.setListData(roomList);
+		
+		}else if (protocol.equals("JoinRoom")) {
+			
+			myRoom = user;
+			JOptionPane.showMessageDialog(null, "채팅방에 입장했습니다.", "알림", JOptionPane.INFORMATION_MESSAGE, null);
 		}
 		
-		
+	
 	}
 
 	private void sendMessage(String str) { // 서버에게 메세지를 보내는 메소드, 서버에게 메시지를 보낼 때는 OUT으로 보냄
@@ -317,7 +331,7 @@ public class ClientChat extends JFrame implements ActionListener {
 
 			System.out.println("loginFrame 접속이 눌림");
 			
-			ip = ipTf.getText().trim();
+			ip = "127.0.0.1";//ipTf.getText().trim();
 			port = Integer.parseInt(portTf.getText().trim());
 			name = nameTf.getText().trim(); // name을 받아오는 부분 
 			
@@ -326,7 +340,7 @@ public class ClientChat extends JFrame implements ActionListener {
 		} else if (e.getSource() == noteSendBtn) {
 
 			System.out.println("쪽지보내기 버튼");
-			String user = (String)userLt.getSelectedValue();
+			String user =(String)userLt.getSelectedValue();
 			
 			String note = JOptionPane.showInputDialog("보낼메세지");
 			
@@ -344,6 +358,9 @@ public class ClientChat extends JFrame implements ActionListener {
 		} else if (e.getSource() == joinRoomBtn) {
 
 			System.out.println("참여 버튼 ");
+			
+			String joinRoom = (String)chatRoomLt.getSelectedValue();
+			sendMessage("JoinRoom/"+joinRoom);
 
 		} else if (e.getSource() == makeRoomBtn) {
 
@@ -361,6 +378,8 @@ public class ClientChat extends JFrame implements ActionListener {
 			
 			sendMessage("Chatting/"+myRoom +"/"+textField.getText().trim());
 			// chattion + 방이름 + 내용
+			
+			System.out.println("전송버튼 눌렀을 때 내용 : "+textField.getText().trim()+"myroom 정보 : "+myRoom);
 		} 
 	}
 

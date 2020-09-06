@@ -200,6 +200,16 @@ public class ServerChat extends JFrame implements ActionListener {
 					sendMessage("OldUser/"+u.name);
 				}
 				
+				// 자신에게 기존 방을 알림 
+				
+				for(int i =0; i < roomVector.size();i++) {
+					RoomInfo r = (RoomInfo)roomVector.elementAt(i);
+					
+					sendMessage("OldRoom/"+r.roomName);
+				}
+				
+				sendMessage("RoomListUpdate/ " );
+				
 				
 				userVector.add(this); // 사용자들에게 알린 후에 vector에 자신을 추가 
 				
@@ -292,6 +302,19 @@ public class ServerChat extends JFrame implements ActionListener {
 					if(r.roomName.equals(user)) {
 						r.boradCastRoom("Chatting/"+name+"/"+msg);
 					}
+					
+				}
+				
+			} else if(protocol.equals("JoinRoom")) {
+
+				for(int i = 0; i < roomVector.size();i++) {
+					RoomInfo r = (RoomInfo)roomVector.elementAt(i);
+					
+					if(r.roomName.equals(user)){
+						// 사용자 추가
+						r.addUser(this);
+						sendMessage("JoinRoom/"+user);
+					}
 				}
 				
 			}
@@ -340,6 +363,10 @@ public class ServerChat extends JFrame implements ActionListener {
 				UserInfo u = (UserInfo)roomUserVector.elementAt(i);
 				u.sendMessage(str);
 			}
+		}
+		
+		public void addUser(UserInfo u) {
+			this.roomUserVector.add(u);
 		}
 	}
 } // End ServerCaht
