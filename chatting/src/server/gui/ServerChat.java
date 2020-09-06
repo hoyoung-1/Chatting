@@ -36,15 +36,16 @@ public class ServerChat extends JFrame implements ActionListener {
 	private Socket socket;
 	private int port;
 	private Vector userVector = new Vector();
+	private Vector roomVector = new Vector();
 	
 	private StringTokenizer st;
-
+	
 	ServerChat() { // 생성자
 		serverInit();
 		actionBtn();
 	}
 
-	private void serverNet() {
+	private void serverNet() { // 서버 접속 
 		try {
 			port = Integer.parseInt(portTf.getText().trim());
 			serverSocket = new ServerSocket(port); // 포트번호 부여
@@ -163,6 +164,8 @@ public class ServerChat extends JFrame implements ActionListener {
 
 		private Socket userSocket;
 		private String name;
+		
+		private boolean roomCh = true; // 방을 만들 수 있는 상태 
 
 		UserInfo(Socket socket) {
 			this.userSocket = socket; // 연결된 소켓을 객체로 만듬 .
@@ -255,6 +258,42 @@ public class ServerChat extends JFrame implements ActionListener {
 					}
 				}
 				
+			}else if ( protocol.equals("CreateRoom")) { // 채팅방 만들기
+				
+				//1. 현재 같은 방이 존재하는지 확인한다
+				for(int i = 0; i < roomVector.size();i++) {
+					RoomInfo r = (RoomInfo)roomVector.elementAt(i);
+					
+					if(r.roomName.equals(user)) {// 만들고자  하는 방이 존재를 할 때.
+						sendMessage("CreateRoomFail/ok");
+						roomCh = false;
+						break;
+					}
+
+				} //End for
+				
+				if(roomCh) { // 방을 만들 수 있을 때. 중복하는 방이 없을 때.
+					RoomInfo newRom = new RoomInfo(user, this);
+					roomVector.add(newRom); // 전체 방 백터에 방을 추가 
+					
+					sendMessage("CreateRoom/"+user);
+					
+					broadCast("NewRoom/"+user);
+				}
+				
+				roomCh = true; // 방만들기 실패 후에 다시 초기값으로 돌려줌
+				
+			}else if(protocol.equals("Chatting")) {
+				String msg = st.nextToken();
+				
+				for(int i =0; i<roomVector.size(); i++) {
+					RoomInfo r = (RoomInfo)roomVector.elementAt(i);
+					
+					if(r.roomName.equals(user)) {
+						r.boradCastRoom("Chatting/"+name+"/"+msg);
+					}
+				}
+				
 			}
 				
 			
@@ -283,11 +322,24 @@ public class ServerChat extends JFrame implements ActionListener {
 				
 			}
 		}
-		
-		
-		
-		
 
 	} // End UserInfo class
 
+	
+	class RoomInfo{ // 채팅방 목록
+		private String roomName;
+		private Vector roomUserVector = new Vector();
+		
+		RoomInfo(String str, UserInfo u){
+			this.roomName = str;
+			this.roomUserVector.add(u);
+		}
+		
+		public void boradCastRoom (String str){ // 현재 채팅방의 모든 사용자에게 알린다
+			for(int i =0; i < roomUserVector.size();i++) {
+				UserInfo u = (UserInfo)roomUserVector.elementAt(i);
+				u.sendMessage(str);
+			}
+		}
+	}
 } // End ServerCaht

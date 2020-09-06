@@ -42,6 +42,7 @@ public class ClientChat extends JFrame implements ActionListener {
 	private JButton sendBtn = new JButton("전송");
 	private JList userLt = new JList();
 	private JList chatRoomLt = new JList();
+	private JTextArea textArea = new JTextArea();
 
 	// clientNet 자원
 	private Socket socket;
@@ -58,6 +59,8 @@ public class ClientChat extends JFrame implements ActionListener {
 	Vector roomList = new Vector(); // 채팅방 목록 
 	StringTokenizer st; // StringTokenizer는 문자열을 어떤 기준으로 나누는데 사용할 수 있는 클래스이다. 
 						// 예 ) NewUser/name = StringTokenizer를 사용하면 '/'를 기준으로 NewUser와 name으로 나눌 수 있음
+	
+	private String myRoom; // 내가 접속한 방 이름
 
 	ClientChat() { // 생성자
 		loginFrameInit(); // loginFrame을 가져옴
@@ -155,11 +158,6 @@ public class ClientChat extends JFrame implements ActionListener {
 			
 			userList.add(user);
 		
-			/*
-			userLt.setListData(userList);
-			userLt.updateUI(); // 빠르게 추가될경우 에러가 발생하기 때문에 변경 
-			*/
-			//업데이트가 아니라 사용자를 추가 
 			
 		}else if(protocol.equals("OldUser")) {
 			userList.add(user);
@@ -177,6 +175,23 @@ public class ClientChat extends JFrame implements ActionListener {
 			
 			userLt.setListData(userList);
 		
+		}else if(protocol.equals("CreateRoom")) { // 방만들기 성공
+			 
+			myRoom = user;
+			
+			
+		}else if(protocol.equals("CreateRoomFail")) { // 방 만들기 성공 
+			
+			JOptionPane.showMessageDialog(null, "방 만들기 실패", "알림", JOptionPane.ERROR_MESSAGE, null);
+			
+		}else if(protocol.equals("NewRoom")) {
+		
+			roomList.add(user);
+			chatRoomLt.setListData(roomList);
+		
+		}else if(protocol.equals("Chatting")) {
+			String msg = st.nextToken();
+			textArea.append(user+" : "+msg+"\n");
 		}
 		
 		
@@ -280,7 +295,6 @@ public class ClientChat extends JFrame implements ActionListener {
 		scrollPane.setBounds(134, 22, 427, 373);
 		contentPane.add(scrollPane);
 
-		JTextArea textArea = new JTextArea();
 		scrollPane.setViewportView(textArea);
 
 		textField = new JTextField();
@@ -334,12 +348,19 @@ public class ClientChat extends JFrame implements ActionListener {
 		} else if (e.getSource() == makeRoomBtn) {
 
 			System.out.println("방만들기 버튼");
+			
+			String roomName = JOptionPane.showInputDialog("방 이름 ");
+			if(roomName != null) {
+				
+				sendMessage("CreateRoom/"+roomName);
+			
+			}
 
 		} else if (e.getSource() == sendBtn) {
-
 			System.out.println("전송버튼");
-			sendMessage("임시테스트 입니다.");
-
+			
+			sendMessage("Chatting/"+myRoom +"/"+textField.getText().trim());
+			// chattion + 방이름 + 내용
 		} 
 	}
 
